@@ -1,0 +1,432 @@
+# Atlassian Migration Tool - Configuration File
+# Copy this file to config.yaml and update with your settings
+
+# Atlassian Source Configuration
+atlassian:
+  # Confluence Configuration
+  confluence:
+    # Confluence instance URL
+    url: "https://confluence.example.com"
+
+    # Authentication (use environment variables for security)
+    username: "your-username"
+    api_token: "${CONFLUENCE_API_TOKEN}"  # Set in environment or .env file
+
+    # Deployment type (true for Cloud, false for Server/Data Center)
+    cloud: true
+
+    # Spaces to migrate (list all spaces you want to extract)
+    spaces:
+      - "SPACE1"
+      - "SPACE2"
+      - "SPACE3"
+
+    # Extraction options
+    extract_options:
+      # Include archived content
+      include_archived: false
+
+      # Download attachments
+      include_attachments: true
+
+      # Attachment file types to include (MIME types or wildcards)
+      attachment_types:
+        - "image/*"
+        - "application/pdf"
+        - "application/vnd.openxmlformats-officedocument.*"
+        - "application/msword"
+        - "text/*"
+
+      # Maximum attachment size in MB
+      max_attachment_size_mb: 100
+
+      # Extract page comments
+      extract_comments: true
+
+      # Extract page labels/tags
+      extract_labels: true
+
+      # Date filter (only extract content modified after this date)
+      # Format: YYYY-MM-DD or leave empty for all content
+      date_filter:
+        modified_after: ""  # e.g., "2024-01-01"
+
+      # Maximum pages per space (0 for unlimited)
+      max_pages_per_space: 0
+
+  # Jira Configuration
+  jira:
+    # Jira instance URL
+    url: "https://jira.example.com"
+
+    # Authentication
+    username: "your-username"
+    api_token: "${JIRA_API_TOKEN}"
+
+    # Deployment type
+    cloud: true
+
+    # Projects to migrate
+    projects:
+      - "PROJECT1"
+      - "PROJECT2"
+
+    # Extraction options
+    extract_options:
+      # Include subtasks
+      include_subtasks: true
+
+      # Include epics
+      include_epics: true
+
+      # Include attachments
+      include_attachments: true
+
+      # Include comments
+      extract_comments: true
+
+      # Include time tracking data
+      extract_time_tracking: true
+
+      # Include custom fields
+      extract_custom_fields: true
+
+      # Specific custom fields to extract (empty for all)
+      custom_fields:
+        - "customfield_10001"  # Story Points
+        - "customfield_10002"  # Sprint
+        - "customfield_10003"  # Team
+
+      # JQL filter for additional filtering
+      # Leave empty to extract all issues in configured projects
+      jql_filter: ""  # e.g., "updated >= -180d"
+
+      # Maximum issues per project (0 for unlimited)
+      max_issues_per_project: 0
+
+# Target System Configuration
+targets:
+  # Wiki.js Configuration
+  wikijs:
+    # Enable/disable Wiki.js upload
+    enabled: true
+
+    # Wiki.js instance URL
+    url: "https://wiki.yourcompany.com"
+
+    # API token (generate in Wiki.js admin panel)
+    api_token: "${WIKIJS_API_TOKEN}"
+
+    # Default locale for pages
+    default_locale: "en"
+
+    # Default editor (markdown, html, etc.)
+    default_editor: "markdown"
+
+    # Root path for migrated content (empty for root)
+    root_path: ""
+
+    # Upload options
+    upload_options:
+      # Create parent pages if they don't exist
+      create_parents: true
+
+      # Update existing pages
+      update_existing: true
+
+      # Conflict resolution strategy (skip, overwrite, version)
+      conflict_resolution: "version"
+
+      # Preserve original author (if user exists)
+      preserve_author: true
+
+      # Preserve timestamps
+      preserve_timestamps: true
+
+  # OpenProject Configuration
+  openproject:
+    # Enable/disable OpenProject upload
+    enabled: true
+
+    # OpenProject instance URL
+    url: "https://openproject.yourcompany.com"
+
+    # API key (generate in OpenProject user settings)
+    api_key: "${OPENPROJECT_API_KEY}"
+
+    # Upload options
+    upload_options:
+      # Create projects if they don't exist
+      create_projects: true
+
+      # Update existing work packages
+      update_existing: true
+
+      # Conflict resolution
+      conflict_resolution: "skip"
+
+      # Preserve relationships (parent/child, blocks, relates)
+      preserve_relationships: true
+
+      # Map users (requires user mapping configuration)
+      map_users: true
+
+      # Create missing users (if permissions allow)
+      create_missing_users: false
+
+  # GitLab Configuration
+  gitlab:
+    # Enable/disable GitLab upload
+    enabled: true
+
+    # GitLab instance URL
+    url: "https://gitlab.yourcompany.com"
+
+    # Personal access token (with api, read_repository, write_repository scopes)
+    token: "${GITLAB_TOKEN}"
+
+    # Group for documentation repositories
+    group: "documentation"
+
+    # Default branch
+    default_branch: "main"
+
+    # Upload options
+    upload_options:
+      # Create repositories if they don't exist
+      create_repos: true
+
+      # Repository visibility (private, internal, public)
+      repo_visibility: "internal"
+
+      # Commit strategy (single, per-page, per-space)
+      commit_strategy: "per-space"
+
+      # Create merge request instead of direct commit
+      create_merge_request: false
+
+      # Preserve timestamps in commit dates
+      preserve_timestamps: true
+
+# Migration Settings
+migration:
+  # Migration mode (full, incremental, dry-run)
+  mode: "full"
+
+  # Preserve original timestamps
+  preserve_timestamps: true
+
+  # Download and migrate attachments
+  download_attachments: true
+
+  # Maximum parallel workers for concurrent operations
+  max_workers: 4
+
+  # Batch size for API operations
+  batch_size: 50
+
+  # Retry configuration
+  retry_attempts: 3
+  retry_delay: 5  # seconds
+  retry_backoff: 2  # exponential backoff multiplier
+
+  # Request timeout (seconds)
+  request_timeout: 60
+  connection_timeout: 30
+
+  # Rate limiting
+  rate_limit:
+    # Maximum requests per minute
+    max_requests_per_minute: 120
+
+    # Delay between requests (seconds)
+    request_delay: 0.5
+
+  # Dry run mode (simulate without making changes)
+  dry_run: false
+
+# Transformation Settings
+transformation:
+  # Confluence transformation settings
+  confluence:
+    # Output format (markdown, html)
+    format: "markdown"
+
+    # Preserve Confluence macros (or strip them)
+    preserve_macros: false
+
+    # Extract and convert tables
+    extract_tables: true
+
+    # Rewrite internal links to new system format
+    rewrite_links: true
+
+    # Convert page tree structure
+    preserve_hierarchy: true
+
+    # Macro handling (specific macros to preserve/convert)
+    macro_handling:
+      code: "convert"       # Convert to code blocks
+      info: "convert"       # Convert to callouts
+      warning: "convert"    # Convert to callouts
+      toc: "generate"       # Generate TOC
+      jira: "link"          # Convert to links
+      default: "strip"      # Default action for unknown macros
+
+  # Jira transformation settings
+  jira:
+    # Include comments in work package descriptions
+    include_comments: true
+
+    # Include attachments
+    include_attachments: true
+
+    # Map users from Jira to OpenProject
+    map_users: true
+
+    # Preserve issue relationships
+    preserve_relationships: true
+
+    # Issue type mapping (Jira type -> OpenProject type)
+    type_mapping:
+      Epic: "Phase"
+      Story: "Task"
+      Task: "Task"
+      Bug: "Bug"
+      Sub-task: "Task"
+
+    # Priority mapping
+    priority_mapping:
+      Highest: "Immediate"
+      High: "High"
+      Medium: "Normal"
+      Low: "Low"
+      Lowest: "Low"
+
+    # Status mapping
+    status_mapping:
+      "To Do": "New"
+      "In Progress": "In progress"
+      "In Review": "In review"
+      "Done": "Closed"
+      "Closed": "Closed"
+
+# User Mapping (optional - load from separate file if preferred)
+user_mapping:
+  # Atlassian email -> Target system username
+  "john.doe@company.com": "jdoe"
+  "jane.smith@company.com": "jsmith"
+  "bob.johnson@company.com": "bjohnson"
+
+  # Default user for unmapped accounts
+  default_user: "system"
+
+# Field Mapping (optional - for Jira custom fields)
+field_mapping:
+  # Jira custom field ID -> OpenProject field name
+  "customfield_10001": "estimated_hours"
+  "customfield_10002": "story_points"
+  "customfield_10003": "sprint"
+  "customfield_10004": "team"
+
+  # Standard field mappings
+  priority: "priority"
+  status: "status"
+  assignee: "assignee"
+  reporter: "author"
+  description: "description"
+
+  # Handle unmapped fields (ignore, log, error)
+  unmapped_field_action: "log"
+
+# Logging Configuration
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  level: "INFO"
+
+  # Log file path
+  file: "data/logs/migration.log"
+
+  # Also log to console
+  console: true
+
+  # Log format (simple, detailed, json)
+  format: "detailed"
+
+  # Rotation settings
+  rotation:
+    max_size_mb: 100
+    max_files: 10
+    max_age_days: 30
+
+# Database Configuration (for tracking migration state)
+database:
+  # Database type (sqlite, postgresql)
+  type: "sqlite"
+
+  # SQLite configuration
+  sqlite:
+    path: "data/migration.db"
+
+  # PostgreSQL configuration (if using PostgreSQL)
+  postgresql:
+    host: "localhost"
+    port: 5432
+    database: "atlassian_migration"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+
+# Notification Configuration (optional)
+notifications:
+  # Enable notifications
+  enabled: false
+
+  # Email notifications
+  email:
+    enabled: false
+    smtp_host: "smtp.gmail.com"
+    smtp_port: 587
+    smtp_username: "${SMTP_USERNAME}"
+    smtp_password: "${SMTP_PASSWORD}"
+    from_address: "migration@company.com"
+    to_addresses:
+      - "admin@company.com"
+
+  # Slack notifications
+  slack:
+    enabled: false
+    webhook_url: "${SLACK_WEBHOOK_URL}"
+    channel: "#migrations"
+
+# Advanced Configuration
+advanced:
+  # Enable debug mode (more verbose logging)
+  debug: false
+
+  # Performance profiling
+  enable_profiling: false
+
+  # Cache settings
+  cache:
+    enabled: true
+    directory: "data/cache"
+    ttl: 3600  # seconds
+
+  # Content validation
+  validation:
+    # Validate content integrity after migration
+    enabled: true
+
+    # Generate checksums for verification
+    generate_checksums: true
+
+    # Validate links after migration
+    validate_links: true
+
+  # Cleanup settings
+  cleanup:
+    # Remove extracted data after successful migration
+    remove_extracted: false
+
+    # Remove transformed data after successful upload
+    remove_transformed: false

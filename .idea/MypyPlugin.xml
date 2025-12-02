@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MypySettings">
+    <option name="configFilePath" value="\\wsl.localhost\Ubuntu\home\ddunnock\projects\atlassian-migration-tool\pyproject.toml" />
+    <option name="useProjectSdk" value="false" />
+  </component>
+</project>
