@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Operations - Jira Migration Tool{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="operationsPage()">
+    <!-- Page header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900">Operations</h2>
+        <p class="mt-1 text-sm text-gray-600">Extract, Transform, and Upload your Jira data</p>
+    </div>
+
+    <!-- Three operation panels -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+        <!-- Extract Panel -->
+        <div class="bg-white shadow rounded-lg" x-data="extractPanel()">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Extract from Jira
+                </h3>
+
+                <!-- Project input -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Project Keys</label>
+                    <input type="text" x-model="projects"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                           placeholder="PROJECT1, PROJECT2">
+                    <p class="mt-1 text-xs text-gray-500">Comma-separated project keys</p>
+                </div>
+
+                <!-- Options -->
+                <div class="mb-4 space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="includeAttachments" class="rounded border-gray-300 text-blue-600">
+                        <span class="ml-2 text-sm text-gray-600">Include Attachments</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="includeComments" class="rounded border-gray-300 text-blue-600">
+                        <span class="ml-2 text-sm text-gray-600">Include Comments</span>
+                    </label>
+                </div>
+
+                <!-- Progress -->
+                <div x-show="taskId" class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span x-text="statusMessage">Ready</span>
+                        <span x-text="progress + '%'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full progress-bar" :style="{ width: progress + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Log output -->
+                <div x-show="logs.length" class="mb-4 bg-gray-900 rounded-md p-3 max-h-40 overflow-y-auto">
+                    <template x-for="log in logs" :key="log.id">
+                        <div class="log-entry" :class="log.level" x-text="log.message"></div>
+                    </template>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex space-x-2">
+                    <button @click="startExtract()" :disabled="running || !projects.trim()"
+                            class="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-show="!running">Start Extract</span>
+                        <span x-show="running">Running...</span>
+                    </button>
+                    <button x-show="running" @click="cancelTask()"
+                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transform Panel -->
+        <div class="bg-white shadow rounded-lg" x-data="transformPanel()">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Transform
+                </h3>
+
+                <!-- Target selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target System</label>
+                    <select x-model="target"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm">
+                        <option value="openproject">OpenProject</option>
+                        <option value="gitlab">GitLab</option>
+                    </select>
+                </div>
+
+                <!-- Source info -->
+                <div class="mb-4 text-sm text-gray-600">
+                    <p>Source: <span class="font-mono">data/extracted</span></p>
+                    <p>Output: <span class="font-mono">data/transformed/<span x-text="target"></span></span></p>
+                </div>
+
+                <!-- Progress -->
+                <div x-show="taskId" class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span x-text="statusMessage">Ready</span>
+                        <span x-text="progress + '%'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-600 h-2 rounded-full progress-bar" :style="{ width: progress + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Log output -->
+                <div x-show="logs.length" class="mb-4 bg-gray-900 rounded-md p-3 max-h-40 overflow-y-auto">
+                    <template x-for="log in logs" :key="log.id">
+                        <div class="log-entry" :class="log.level" x-text="log.message"></div>
+                    </template>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex space-x-2">
+                    <button @click="startTransform()" :disabled="running"
+                            class="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50">
+                        <span x-show="!running">Start Transform</span>
+                        <span x-show="running">Running...</span>
+                    </button>
+                    <button x-show="running" @click="cancelTask()"
+                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Panel -->
+        <div class="bg-white shadow rounded-lg" x-data="uploadPanel()">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <svg class="h-5 w-5 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    Upload
+                </h3>
+
+                <!-- Target selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target System</label>
+                    <select x-model="target"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm">
+                        <option value="openproject">OpenProject</option>
+                        <option value="gitlab">GitLab</option>
+                    </select>
+                </div>
+
+                <!-- Options -->
+                <div class="mb-4 space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="dryRun" class="rounded border-gray-300 text-purple-600">
+                        <span class="ml-2 text-sm text-gray-600">Dry Run (simulate only)</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="createProjects" class="rounded border-gray-300 text-purple-600">
+                        <span class="ml-2 text-sm text-gray-600">Create Projects</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="updateExisting" class="rounded border-gray-300 text-purple-600">
+                        <span class="ml-2 text-sm text-gray-600">Update Existing</span>
+                    </label>
+                </div>
+
+                <!-- Progress -->
+                <div x-show="taskId" class="mb-4">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span x-text="statusMessage">Ready</span>
+                        <span x-text="progress + '%'"></span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-purple-600 h-2 rounded-full progress-bar" :style="{ width: progress + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- Log output -->
+                <div x-show="logs.length" class="mb-4 bg-gray-900 rounded-md p-3 max-h-40 overflow-y-auto">
+                    <template x-for="log in logs" :key="log.id">
+                        <div class="log-entry" :class="log.level" x-text="log.message"></div>
+                    </template>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex space-x-2">
+                    <button @click="startUpload()" :disabled="running"
+                            class="flex-1 px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50">
+                        <span x-show="!running">Start Upload</span>
+                        <span x-show="running">Running...</span>
+                    </button>
+                    <button x-show="running" @click="cancelTask()"
+                            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function operationsPage() {
+        return {};
+    }
+
+    function extractPanel() {
+        return {
+            projects: '',
+            includeAttachments: true,
+            includeComments: true,
+            taskId: null,
+            running: false,
+            progress: 0,
+            statusMessage: 'Ready',
+            logs: [],
+            logCounter: 0,
+            eventSource: null,
+
+            async startExtract() {
+                const projectList = this.projects.split(',').map(p => p.trim()).filter(p => p);
+                if (!projectList.length) return;
+
+                this.logs = [];
+                this.progress = 0;
+                this.statusMessage = 'Starting...';
+                this.running = true;
+
+                try {
+                    const response = await fetch('/api/extract/jira', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            projects: projectList,
+                            include_attachments: this.includeAttachments,
+                            include_comments: this.includeComments
+                        })
+                    });
+                    const data = await response.json();
+
+                    if (data.success && data.task_id) {
+                        this.taskId = data.task_id;
+                        this.connectSSE();
+                    } else {
+                        this.addLog(data.error || 'Failed to start', 'error');
+                        this.running = false;
+                    }
+                } catch (err) {
+                    this.addLog('Request failed: ' + err.message, 'error');
+                    this.running = false;
+                }
+            },
+
+            connectSSE() {
+                this.eventSource = new EventSource(`/api/extract/progress/${this.taskId}`);
+
+                this.eventSource.addEventListener('progress', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = data.progress || 0;
+                    this.statusMessage = data.message || 'Processing...';
+                });
+
+                this.eventSource.addEventListener('log', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.addLog(data.message, data.level);
+                });
+
+                this.eventSource.addEventListener('complete', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = 100;
+                    this.statusMessage = data.success ? 'Complete!' : 'Failed';
+                    this.addLog(data.message, data.success ? 'info' : 'error');
+                    this.cleanup();
+                });
+
+                this.eventSource.addEventListener('error', (e) => {
+                    if (e.data) {
+                        const data = JSON.parse(e.data);
+                        this.addLog(data.error || 'Error occurred', 'error');
+                    }
+                    this.cleanup();
+                });
+
+                this.eventSource.onerror = () => {
+                    this.cleanup();
+                };
+            },
+
+            addLog(message, level = 'info') {
+                this.logs.push({ id: ++this.logCounter, message, level });
+                // Keep only last 100 logs
+                if (this.logs.length > 100) this.logs.shift();
+            },
+
+            async cancelTask() {
+                if (this.taskId) {
+                    await fetch(`/api/extract/cancel/${this.taskId}`, { method: 'POST' });
+                }
+                this.cleanup();
+            },
+
+            cleanup() {
+                if (this.eventSource) {
+                    this.eventSource.close();
+                    this.eventSource = null;
+                }
+                this.running = false;
+            }
+        }
+    }
+
+    function transformPanel() {
+        return {
+            target: 'openproject',
+            taskId: null,
+            running: false,
+            progress: 0,
+            statusMessage: 'Ready',
+            logs: [],
+            logCounter: 0,
+            eventSource: null,
+
+            async startTransform() {
+                this.logs = [];
+                this.progress = 0;
+                this.statusMessage = 'Starting...';
+                this.running = true;
+
+                try {
+                    const response = await fetch('/api/transform', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ target: this.target })
+                    });
+                    const data = await response.json();
+
+                    if (data.success && data.task_id) {
+                        this.taskId = data.task_id;
+                        this.connectSSE();
+                    } else {
+                        this.addLog(data.error || 'Failed to start', 'error');
+                        if (data.suggestion) this.addLog(data.suggestion, 'warning');
+                        this.running = false;
+                    }
+                } catch (err) {
+                    this.addLog('Request failed: ' + err.message, 'error');
+                    this.running = false;
+                }
+            },
+
+            connectSSE() {
+                this.eventSource = new EventSource(`/api/transform/progress/${this.taskId}`);
+
+                this.eventSource.addEventListener('progress', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = data.progress || 0;
+                    this.statusMessage = data.message || 'Processing...';
+                });
+
+                this.eventSource.addEventListener('log', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.addLog(data.message, data.level);
+                });
+
+                this.eventSource.addEventListener('complete', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = 100;
+                    this.statusMessage = data.success ? 'Complete!' : 'Failed';
+                    this.addLog(data.message, data.success ? 'info' : 'error');
+                    this.cleanup();
+                });
+
+                this.eventSource.addEventListener('error', (e) => {
+                    if (e.data) {
+                        const data = JSON.parse(e.data);
+                        this.addLog(data.error || 'Error occurred', 'error');
+                    }
+                    this.cleanup();
+                });
+
+                this.eventSource.onerror = () => { this.cleanup(); };
+            },
+
+            addLog(message, level = 'info') {
+                this.logs.push({ id: ++this.logCounter, message, level });
+                if (this.logs.length > 100) this.logs.shift();
+            },
+
+            async cancelTask() {
+                if (this.taskId) {
+                    await fetch(`/api/transform/cancel/${this.taskId}`, { method: 'POST' });
+                }
+                this.cleanup();
+            },
+
+            cleanup() {
+                if (this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+                this.running = false;
+            }
+        }
+    }
+
+    function uploadPanel() {
+        return {
+            target: 'openproject',
+            dryRun: false,
+            createProjects: true,
+            updateExisting: true,
+            taskId: null,
+            running: false,
+            progress: 0,
+            statusMessage: 'Ready',
+            logs: [],
+            logCounter: 0,
+            eventSource: null,
+
+            async startUpload() {
+                this.logs = [];
+                this.progress = 0;
+                this.statusMessage = 'Starting...';
+                this.running = true;
+
+                try {
+                    const response = await fetch(`/api/upload/${this.target}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            target: this.target,
+                            dry_run: this.dryRun,
+                            create_projects: this.createProjects,
+                            update_existing: this.updateExisting
+                        })
+                    });
+                    const data = await response.json();
+
+                    if (data.success && data.task_id) {
+                        this.taskId = data.task_id;
+                        this.connectSSE();
+                    } else {
+                        this.addLog(data.error || 'Failed to start', 'error');
+                        if (data.suggestion) this.addLog(data.suggestion, 'warning');
+                        this.running = false;
+                    }
+                } catch (err) {
+                    this.addLog('Request failed: ' + err.message, 'error');
+                    this.running = false;
+                }
+            },
+
+            connectSSE() {
+                this.eventSource = new EventSource(`/api/upload/progress/${this.taskId}`);
+
+                this.eventSource.addEventListener('progress', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = data.progress || 0;
+                    this.statusMessage = data.message || 'Processing...';
+                });
+
+                this.eventSource.addEventListener('log', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.addLog(data.message, data.level);
+                });
+
+                this.eventSource.addEventListener('complete', (e) => {
+                    const data = JSON.parse(e.data);
+                    this.progress = 100;
+                    this.statusMessage = data.success ? 'Complete!' : 'Failed';
+                    this.addLog(data.message, data.success ? 'info' : 'error');
+                    this.cleanup();
+                });
+
+                this.eventSource.addEventListener('error', (e) => {
+                    if (e.data) {
+                        const data = JSON.parse(e.data);
+                        this.addLog(data.error || 'Error occurred', 'error');
+                    }
+                    this.cleanup();
+                });
+
+                this.eventSource.onerror = () => { this.cleanup(); };
+            },
+
+            addLog(message, level = 'info') {
+                this.logs.push({ id: ++this.logCounter, message, level });
+                if (this.logs.length > 100) this.logs.shift();
+            },
+
+            async cancelTask() {
+                if (this.taskId) {
+                    await fetch(`/api/upload/cancel/${this.taskId}`, { method: 'POST' });
+                }
+                this.cleanup();
+            },
+
+            cleanup() {
+                if (this.eventSource) { this.eventSource.close(); this.eventSource = null; }
+                this.running = false;
+            }
+        }
+    }
+</script>
+{% endblock %}

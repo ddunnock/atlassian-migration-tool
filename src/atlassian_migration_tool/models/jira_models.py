@@ -4,9 +4,10 @@ Jira Data Models
 Pydantic models for representing Jira content in a structured way.
 """
 
-from typing import List, Optional, Dict, Any
 from datetime import datetime
 from pathlib import Path
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -19,7 +20,7 @@ class JiraAttachment(BaseModel):
     size: int
     created: str
     author: str
-    local_path: Optional[Path] = None
+    local_path: Path | None = None
 
     class Config:
         populate_by_name = True
@@ -31,7 +32,7 @@ class JiraComment(BaseModel):
     id: str
     author: str
     created: str
-    updated: Optional[str] = None
+    updated: str | None = None
     body: str
 
 
@@ -41,21 +42,21 @@ class JiraIssue(BaseModel):
     id: str
     key: str
     summary: str
-    description: Optional[str] = None
+    description: str | None = None
     issue_type: str = Field(alias='issueType')
     status: str
-    priority: Optional[str] = None
-    assignee: Optional[str] = None
+    priority: str | None = None
+    assignee: str | None = None
     reporter: str
     created: str
     updated: str
     project_key: str = Field(alias='projectKey')
-    parent_key: Optional[str] = Field(None, alias='parentKey')
-    labels: List[str] = Field(default_factory=list)
-    attachments: List[JiraAttachment] = Field(default_factory=list)
-    comments: List[JiraComment] = Field(default_factory=list)
-    custom_fields: Dict[str, Any] = Field(default_factory=dict, alias='customFields')
-    local_path: Optional[Path] = None
+    parent_key: str | None = Field(None, alias='parentKey')
+    labels: list[str] = Field(default_factory=list)
+    attachments: list[JiraAttachment] = Field(default_factory=list)
+    comments: list[JiraComment] = Field(default_factory=list)
+    custom_fields: dict[str, Any] = Field(default_factory=dict, alias='customFields')
+    local_path: Path | None = None
 
     class Config:
         populate_by_name = True
@@ -67,16 +68,16 @@ class JiraProject(BaseModel):
     key: str
     name: str
     type: str
-    description: Optional[str] = None
-    issues: List[JiraIssue] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    description: str | None = None
+    issues: list[JiraIssue] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
     extracted_at: datetime = Field(default_factory=datetime.now)
 
     def get_issue_count(self) -> int:
         """Get total number of issues."""
         return len(self.issues)
 
-    def get_issue_by_key(self, key: str) -> Optional[JiraIssue]:
+    def get_issue_by_key(self, key: str) -> JiraIssue | None:
         """Find an issue by its key."""
         for issue in self.issues:
             if issue.key == key:
@@ -87,9 +88,9 @@ class JiraProject(BaseModel):
 class JiraExtractionResult(BaseModel):
     """Represents the result of a Jira extraction operation."""
 
-    projects: List[JiraProject]
+    projects: list[JiraProject]
     extraction_date: datetime = Field(default_factory=datetime.now)
-    config: Dict[str, Any]
-    statistics: Dict[str, Any] = Field(default_factory=dict)
-    errors: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
+    config: dict[str, Any]
+    statistics: dict[str, Any] = Field(default_factory=dict)
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)

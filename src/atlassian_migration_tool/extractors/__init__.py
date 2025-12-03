@@ -10,11 +10,9 @@ Each extractor is responsible for:
 """
 
 from atlassian_migration_tool.extractors.base_extractor import BaseExtractor
-from atlassian_migration_tool.extractors.confluence_extractor import ConfluenceExtractor
 from atlassian_migration_tool.extractors.jira_extractor import JiraExtractor
 
 __all__ = [
     "BaseExtractor",
-    "ConfluenceExtractor",
     "JiraExtractor",
 ]

@@ -1,0 +1,70 @@
+/* Custom styles for Jira Migration Tool Web GUI */
+
+/* Ensure inputs have proper styling with Tailwind */
+input[type="text"],
+input[type="url"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+select,
+textarea {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+}
+
+input[type="text"]:focus,
+input[type="url"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Log entry styling */
+.log-entry {
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+/* Progress bar animation */
+.progress-bar {
+    transition: width 0.3s ease-in-out;
+}
+
+/* Toast animations */
+.toast-enter {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.toast-enter-active {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast-leave-active {
+    opacity: 0;
+}
+
+/* Scrollbar styling for log containers */
+.bg-gray-900::-webkit-scrollbar {
+    width: 8px;
+}
+
+.bg-gray-900::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+.bg-gray-900::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+
+.bg-gray-900::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}

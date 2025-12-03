@@ -4,10 +4,11 @@ Base Extractor Class
 Abstract base class for all extractors providing common functionality.
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, List
-from pathlib import Path
 import json
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any
+
 from loguru import logger
 
 
@@ -18,7 +19,7 @@ class BaseExtractor(ABC):
     All extractors should inherit from this class and implement the required methods.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize the extractor.
 
@@ -115,7 +116,7 @@ class BaseExtractor(ABC):
         Returns:
             Loaded data
         """
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, encoding='utf-8') as f:
             return json.load(f)
 
     def _load_text(self, filepath: Path) -> str:
@@ -128,5 +129,5 @@ class BaseExtractor(ABC):
         Returns:
             File content
         """
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, encoding='utf-8') as f:
             return f.read()

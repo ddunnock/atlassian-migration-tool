@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Jira Migration Tool{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="dashboard()">
+    <!-- Page header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <p class="mt-1 text-sm text-gray-600">Overview of your migration status</p>
+    </div>
+
+    <!-- Status cards -->
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <!-- Configuration Status -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6" :class="status.config_loaded ? 'text-green-500' : 'text-red-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Configuration</dt>
+                            <dd class="text-lg font-semibold" :class="status.config_loaded ? 'text-green-600' : 'text-red-600'" x-text="status.config_loaded ? 'Loaded' : 'Not Loaded'"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Jira Connection -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6" :class="status.jira_configured ? 'text-green-500' : 'text-yellow-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Jira</dt>
+                            <dd class="text-lg font-semibold" :class="status.jira_configured ? 'text-green-600' : 'text-yellow-600'" x-text="status.jira_configured ? 'Configured' : 'Not Configured'"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extracted Projects -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Extracted</dt>
+                            <dd class="text-lg font-semibold text-gray-900" x-text="status.extracted_projects?.length || 0"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Target Systems -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-6 w-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Targets</dt>
+                            <dd class="text-lg font-semibold text-gray-900" x-text="status.targets_configured?.length || 0"></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white shadow rounded-lg mb-8">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+            <div class="flex flex-wrap gap-4">
+                <a href="/config" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                    Configure Settings
+                </a>
+                <button @click="testConnections()" :disabled="testing" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                    <span x-show="!testing">Test Connections</span>
+                    <span x-show="testing">Testing...</span>
+                </button>
+                <a href="/operations" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                    Start Operations
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Tasks -->
+    <div class="bg-white shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Tasks</h3>
+            <div x-show="status.recent_tasks?.length > 0" class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <template x-for="task in status.recent_tasks" :key="task.task_id">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900" x-text="task.task_id"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize" x-text="task.task_type"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                          :class="{
+                                              'bg-green-100 text-green-800': task.status === 'completed',
+                                              'bg-red-100 text-red-800': task.status === 'failed',
+                                              'bg-yellow-100 text-yellow-800': task.status === 'running',
+                                              'bg-gray-100 text-gray-800': task.status === 'pending'
+                                          }"
+                                          x-text="task.status"></span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="formatDate(task.created_at)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div x-show="!status.recent_tasks?.length" class="text-center text-gray-500 py-8">
+                No recent tasks
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function dashboard() {
+        return {
+            status: {},
+            testing: false,
+
+            async init() {
+                await this.loadStatus();
+                // Refresh status every 30 seconds
+                setInterval(() => this.loadStatus(), 30000);
+            },
+
+            async loadStatus() {
+                try {
+                    const response = await fetch('/api/status');
+                    this.status = await response.json();
+                } catch (error) {
+                    console.error('Failed to load status:', error);
+                }
+            },
+
+            async testConnections() {
+                this.testing = true;
+                try {
+                    const response = await fetch('/api/connections/test/all', { method: 'POST' });
+                    const data = await response.json();
+
+                    // Show results as toasts
+                    data.results.forEach(result => {
+                        const type = result.success ? 'success' : 'error';
+                        Alpine.store('app')?.addToast?.(
+                            `${result.system}: ${result.message}`,
+                            type
+                        );
+                    });
+
+                    await this.loadStatus();
+                } catch (error) {
+                    console.error('Connection test failed:', error);
+                } finally {
+                    this.testing = false;
+                }
+            },
+
+            formatDate(dateStr) {
+                if (!dateStr) return '-';
+                return new Date(dateStr).toLocaleString();
+            }
+        }
+    }
+</script>
+{% endblock %}

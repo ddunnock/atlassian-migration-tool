@@ -5,8 +5,8 @@ This module provides functionality to extract content from Jira
 using the atlassian-python-api library.
 """
 
-from typing import List, Dict, Any, Optional
 from pathlib import Path
+from typing import Any
 
 from atlassian import Jira
 from loguru import logger
@@ -29,7 +29,7 @@ class JiraExtractor(BaseExtractor):
         >>> project = extractor.extract_project('PROJ')
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize Jira extractor.
 
@@ -62,7 +62,7 @@ class JiraExtractor(BaseExtractor):
             logger.error(f"Jira connection test failed: {e}")
             return False
 
-    def extract(self) -> List[JiraProject]:
+    def extract(self) -> list[JiraProject]:
         """
         Extract all configured Jira projects.
 
@@ -81,7 +81,7 @@ class JiraExtractor(BaseExtractor):
 
         return projects
 
-    def list_projects(self) -> List[Dict[str, Any]]:
+    def list_projects(self) -> list[dict[str, Any]]:
         """List all accessible Jira projects."""
         logger.info("Fetching list of Jira projects")
 
@@ -133,7 +133,7 @@ class JiraExtractor(BaseExtractor):
         logger.info(f"Extracted {len(issues)} issues from project {project_key}")
         return project
 
-    def _extract_issues(self, project_key: str, project_dir: Path) -> List[JiraIssue]:
+    def _extract_issues(self, project_key: str, project_dir: Path) -> list[JiraIssue]:
         """
         Extract all issues from a project.
 
@@ -186,7 +186,7 @@ class JiraExtractor(BaseExtractor):
 
         return issues
 
-    def _process_issue(self, issue_data: Dict[str, Any], project_dir: Path) -> JiraIssue:
+    def _process_issue(self, issue_data: dict[str, Any], project_dir: Path) -> JiraIssue:
         """
         Process a single issue.
 
@@ -224,7 +224,7 @@ class JiraExtractor(BaseExtractor):
 
         return issue
 
-    def _organize_by_issue_type(self, issues: List[JiraIssue], project_dir: Path) -> None:
+    def _organize_by_issue_type(self, issues: list[JiraIssue], project_dir: Path) -> None:
         """
         Organize issues into separate files by issue type.
 

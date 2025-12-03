@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - Jira Migration Tool{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="configPage()">
+    <!-- Page header -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900">Configuration</h2>
+        <p class="mt-1 text-sm text-gray-600">Manage your Jira and target system settings</p>
+    </div>
+
+    <!-- Loading state -->
+    <div x-show="loading" class="text-center py-12">
+        <svg class="animate-spin h-8 w-8 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <p class="mt-2 text-gray-500">Loading configuration...</p>
+    </div>
+
+    <!-- Error state -->
+    <div x-show="error && !loading" class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div class="flex">
+            <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-red-800" x-text="error"></h3>
+                <p x-show="suggestion" class="mt-1 text-sm text-red-700" x-text="suggestion"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Configuration form -->
+    <div x-show="!loading" class="space-y-6">
+        <!-- Jira Configuration -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Jira Configuration</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">URL</label>
+                        <input type="url" x-model="config.atlassian.jira.url"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="https://your-domain.atlassian.net">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Username/Email</label>
+                        <input type="text" x-model="config.atlassian.jira.username"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="your-email@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">API Token</label>
+                        <input type="password" x-model="config.atlassian.jira.api_token"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="Your API token">
+                        <p class="mt-1 text-xs text-gray-500">For Jira Cloud, create a token at id.atlassian.com</p>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" x-model="config.atlassian.jira.cloud"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">Cloud Instance</label>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button @click="testJiraConnection()" :disabled="testingJira"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50">
+                        <span x-show="!testingJira">Test Connection</span>
+                        <span x-show="testingJira">Testing...</span>
+                    </button>
+                    <span x-show="jiraStatus" class="ml-3 text-sm" :class="jiraStatus.success ? 'text-green-600' : 'text-red-600'" x-text="jiraStatus.message"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenProject Configuration -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">OpenProject</h3>
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="config.targets.openproject.enabled"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-600">Enabled</span>
+                    </label>
+                </div>
+                <div x-show="config.targets.openproject.enabled" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">URL</label>
+                        <input type="url" x-model="config.targets.openproject.url"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="https://openproject.example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">API Key</label>
+                        <input type="password" x-model="config.targets.openproject.api_key"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="Your API key">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GitLab Configuration -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">GitLab</h3>
+                    <label class="flex items-center">
+                        <input type="checkbox" x-model="config.targets.gitlab.enabled"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <span class="ml-2 text-sm text-gray-600">Enabled</span>
+                    </label>
+                </div>
+                <div x-show="config.targets.gitlab.enabled" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">URL</label>
+                        <input type="url" x-model="config.targets.gitlab.url"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="https://gitlab.example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Personal Access Token</label>
+                        <input type="password" x-model="config.targets.gitlab.token"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="Your access token">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Group</label>
+                        <input type="text" x-model="config.targets.gitlab.group"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                               placeholder="documentation">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Migration Settings -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Migration Settings</h3>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Mode</label>
+                        <select x-model="config.migration.mode"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <option value="full">Full Migration</option>
+                            <option value="incremental">Incremental</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Max Workers</label>
+                        <input type="number" x-model.number="config.migration.max_workers" min="1" max="16"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    </div>
+                    <div class="flex items-center pt-6">
+                        <input type="checkbox" x-model="config.migration.download_attachments"
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                        <label class="ml-2 block text-sm text-gray-900">Download Attachments</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="flex justify-end space-x-4">
+            <button @click="loadConfig()" class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                Reset
+            </button>
+            <button @click="saveConfig()" :disabled="saving"
+                    class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+                <span x-show="!saving">Save Configuration</span>
+                <span x-show="saving">Saving...</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function configPage() {
+        return {
+            loading: true,
+            saving: false,
+            error: null,
+            suggestion: null,
+            testingJira: false,
+            jiraStatus: null,
+            config: {
+                atlassian: {
+                    jira: { url: '', username: '', api_token: '', cloud: true }
+                },
+                targets: {
+                    openproject: { enabled: false, url: '', api_key: '' },
+                    gitlab: { enabled: false, url: '', token: '', group: '' }
+                },
+                migration: { mode: 'full', max_workers: 4, download_attachments: true }
+            },
+
+            async init() {
+                await this.loadConfig();
+            },
+
+            async loadConfig() {
+                this.loading = true;
+                this.error = null;
+                try {
+                    const response = await fetch('/api/config');
+                    const data = await response.json();
+
+                    if (data.success && data.config) {
+                        // Merge with defaults to ensure structure
+                        this.config = {
+                            atlassian: {
+                                jira: {
+                                    url: data.config.atlassian?.jira?.url || '',
+                                    username: data.config.atlassian?.jira?.username || '',
+                                    api_token: data.config.atlassian?.jira?.api_token || '',
+                                    cloud: data.config.atlassian?.jira?.cloud ?? true
+                                }
+                            },
+                            targets: {
+                                openproject: {
+                                    enabled: data.config.targets?.openproject?.enabled || false,
+                                    url: data.config.targets?.openproject?.url || '',
+                                    api_key: data.config.targets?.openproject?.api_key || ''
+                                },
+                                gitlab: {
+                                    enabled: data.config.targets?.gitlab?.enabled || false,
+                                    url: data.config.targets?.gitlab?.url || '',
+                                    token: data.config.targets?.gitlab?.token || '',
+                                    group: data.config.targets?.gitlab?.group || ''
+                                }
+                            },
+                            migration: {
+                                mode: data.config.migration?.mode || 'full',
+                                max_workers: data.config.migration?.max_workers || 4,
+                                download_attachments: data.config.migration?.download_attachments ?? true
+                            }
+                        };
+                    } else {
+                        this.error = data.error || 'Failed to load configuration';
+                        this.suggestion = data.suggestion;
+                    }
+                } catch (err) {
+                    this.error = 'Failed to load configuration: ' + err.message;
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async saveConfig() {
+                this.saving = true;
+                try {
+                    const response = await fetch('/api/config', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ config: this.config })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Show success toast
+                        this.$root.addToast?.('Configuration saved successfully', 'success');
+                    } else {
+                        this.$root.addToast?.(data.error || 'Failed to save', 'error');
+                    }
+                } catch (err) {
+                    this.$root.addToast?.('Failed to save: ' + err.message, 'error');
+                } finally {
+                    this.saving = false;
+                }
+            },
+
+            async testJiraConnection() {
+                this.testingJira = true;
+                this.jiraStatus = null;
+                try {
+                    const response = await fetch('/api/connections/test/jira', { method: 'POST' });
+                    this.jiraStatus = await response.json();
+                } catch (err) {
+                    this.jiraStatus = { success: false, message: 'Test failed: ' + err.message };
+                } finally {
+                    this.testingJira = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

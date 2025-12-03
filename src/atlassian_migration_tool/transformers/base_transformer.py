@@ -5,8 +5,8 @@ Abstract base class for all transformers providing common functionality.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
-from pathlib import Path
+from typing import Any
+
 from loguru import logger
 
 
@@ -17,7 +17,7 @@ class BaseTransformer(ABC):
     All transformers should inherit from this class and implement the required methods.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize the transformer.
 

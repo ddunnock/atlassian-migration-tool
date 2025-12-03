@@ -5,6 +5,7 @@ Uploads content to GitLab repositories via REST API.
 """
 
 from typing import Any
+
 from loguru import logger
 
 from atlassian_migration_tool.uploaders.base_uploader import BaseUploader

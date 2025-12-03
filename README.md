@@ -1,27 +1,26 @@
-# Atlassian Migration Tool
+# Jira Migration Tool
 
-A comprehensive Python tool for migrating content from Atlassian products (Confluence and Jira) to open-source alternatives (Wiki.js, OpenProject, and GitLab).
+A Python tool for migrating content from Jira to open-source alternatives (OpenProject, GitLab).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 ## Features
 
-### ✅ Supported Migrations
+### Supported Migrations
 
-- **Confluence → Wiki.js**: Migrate documentation, pages, and spaces
-- **Jira → OpenProject**: Migrate issues, projects, and work packages
-- **Content → GitLab**: Export documentation to GitLab wikis and repositories
+- **Jira to OpenProject**: Migrate issues, projects, and work packages
+- **Jira to GitLab**: Export issues to GitLab issues/wikis
 
-### 🎯 Key Capabilities
+### Key Capabilities
 
-- **Comprehensive Extraction**: Pages, issues, attachments, comments, labels, and metadata
-- **Smart Transformation**: Automatic content format conversion (HTML → Markdown)
+- **Web-based GUI**: Modern browser interface that works in WSL and native environments
+- **Comprehensive Extraction**: Issues, attachments, comments, and metadata
+- **Independent Operations**: Configure, Test, Extract, Transform, and Upload separately
+- **Real-time Progress**: Server-Sent Events for live progress updates
 - **Flexible Configuration**: YAML-based configuration with environment variable support
-- **GUI & CLI Interfaces**: Choose between graphical and command-line interfaces
-- **Progress Tracking**: Real-time status monitoring and detailed logging
+- **CLI Interface**: Full command-line support for automation
 - **Dry Run Mode**: Test migrations without making changes
-- **Incremental Sync**: Support for incremental updates (future feature)
 
 ## Quick Start
 
@@ -60,153 +59,170 @@ cp config/config.example.yaml config/config.yaml
 3. **Set environment variables** (create `.env` file):
 
 ```bash
-CONFLUENCE_API_TOKEN=your_confluence_token
 JIRA_API_TOKEN=your_jira_token
-WIKIJS_API_TOKEN=your_wikijs_token
 OPENPROJECT_API_KEY=your_openproject_key
 GITLAB_TOKEN=your_gitlab_token
 ```
 
 ## Usage
 
-### Graphical User Interface (Recommended)
+### Web GUI (Recommended)
+
+Launch the web-based GUI:
 
 ```bash
-# Launch the GUI
-atlassian-migrate gui
+# Using the command
+atlassian-migrate web
+
+# Or directly
+atlassian-migrate-gui
 ```
 
-#### GUI Features:
+This will:
+1. Start a local web server on http://127.0.0.1:8080
+2. Automatically open your default browser
+3. **WSL Support**: In WSL, the browser opens in Windows automatically
+
+#### GUI Features
 
 - **Dashboard**: System status overview and quick actions
-- **Configuration**: Visual editor for settings (no YAML editing!)
-- **Migration**: Step-by-step workflow with real-time progress
-- **Status**: Migration statistics and monitoring
-- **Logs**: View logs and troubleshoot issues
+- **Configuration**: Visual editor for Jira and target system settings
+- **Operations**: Three independent panels for Extract, Transform, and Upload
+  - Each operation runs independently with real-time progress
+  - Cancel running operations at any time
+  - View detailed logs for each operation
+- **Logs**: Real-time log viewer with filtering and live streaming
 
 ### Command Line Interface
 
 ```bash
-# Test connections
-atlassian-migrate test-connection --source confluence --target wikijs
+# Test Jira connection
+atlassian-migrate test-connection --source jira
 
-# List available content
-atlassian-migrate list --source confluence
+# List Jira projects
+atlassian-migrate list
 
-# Run complete migration
-atlassian-migrate migrate --all
+# Extract Jira projects
+atlassian-migrate extract --projects PROJECT1 PROJECT2
+
+# Transform extracted data
+atlassian-migrate transform --input data/extracted --output data/transformed
+
+# Upload to target system
+atlassian-migrate upload --target openproject
 
 # Get help
 atlassian-migrate --help
 ```
 
-For detailed CLI usage, see the full documentation below.
-
-## Detailed Documentation
-
 ### CLI Commands
-
-#### List Available Content
-
-```bash
-# List Confluence spaces
-atlassian-migrate list --source confluence
-
-# List Jira projects
-atlassian-migrate list --source jira
-```
-
-#### Test Connections
-
-```bash
-# Test all connections
-atlassian-migrate test-connection --source all --target all
-```
 
 #### Extract Content
 
 ```bash
-# Extract Confluence spaces
-atlassian-migrate extract --source confluence --spaces ENGINEERING DOCS
+# Extract specific projects
+atlassian-migrate extract --projects PROJECT1 PROJECT2
 
-# Extract Jira projects
-atlassian-migrate extract --source jira --projects PROJECT1
+# Extract with custom output directory
+atlassian-migrate extract --projects PROJECT1 --output ./my-export
+
+# Dry run (show what would be extracted)
+atlassian-migrate extract --projects PROJECT1 --dry-run
 ```
 
-#### Complete Migration
+#### Transform Content
 
 ```bash
-# Migrate everything
-atlassian-migrate migrate --all
+# Transform for OpenProject
+atlassian-migrate transform --input data/extracted --output data/transformed
+```
 
-# Specific migration
-atlassian-migrate migrate --source confluence --target wikijs --spaces DOCS
+#### Upload Content
+
+```bash
+# Upload to OpenProject
+atlassian-migrate upload --target openproject
+
+# Upload to GitLab
+atlassian-migrate upload --target gitlab
 
 # Dry run
-atlassian-migrate migrate --all --dry-run
+atlassian-migrate upload --target openproject --dry-run
 ```
 
 ## Configuration
 
 See `config/config.example.yaml` for complete configuration options. Key sections:
 
-- **atlassian**: Confluence and Jira settings
-- **targets**: Wiki.js, OpenProject, and GitLab settings
+- **atlassian.jira**: Jira connection settings
+- **targets**: OpenProject and GitLab settings
 - **migration**: Migration behavior and options
 - **transformation**: Content transformation rules
 - **logging**: Logging configuration
 
 ## API Authentication
 
-### Atlassian (Confluence/Jira)
+### Jira
 
 1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
-2. Create API token
-3. Add to `.env` file
+2. Create an API token
+3. Add to `.env` file as `JIRA_API_TOKEN`
 
-### Wiki.js / OpenProject / GitLab
+### OpenProject / GitLab
 
 Generate API tokens/keys in respective admin panels and add to `.env` file.
 
+## WSL Compatibility
+
+The web GUI is designed to work seamlessly in Windows Subsystem for Linux (WSL):
+
+- **Browser Launch**: Uses `cmd.exe` to open the Windows default browser
+- **No X Server Required**: Unlike Tkinter, no display server setup needed
+- **Works with WSL1 and WSL2**: Compatible with all WSL versions
+
+## API Documentation
+
+When the web server is running, API documentation is available at:
+
+- Swagger UI: http://127.0.0.1:8080/docs
+- ReDoc: http://127.0.0.1:8080/redoc
+
 ## Troubleshooting
 
-### GUI won't launch
+### Web GUI won't start
 
-Install tkinter:
 ```bash
-# Ubuntu/Debian
-sudo apt-get install python3-tk
+# Check if port 8080 is in use
+lsof -i :8080
 
-# macOS
-brew install python-tk
+# Use a different port
+atlassian-migrate web --port 3000
 ```
 
-### Debug logging
+### Connection errors
 
-Enable in `config/config.yaml`:
+Enable debug logging in `config/config.yaml`:
 ```yaml
 logging:
   level: "DEBUG"
 ```
 
-View logs: `data/logs/migration.log`
+View logs in `data/logs/migration.log` or the Logs page in the web GUI.
 
 ## Project Status
 
 **Version**: 0.1.0 (Alpha)
 
 ### Completed
-- ✅ GUI and CLI interfaces
-- ✅ Configuration system
-- ✅ Confluence extractor (partial)
-- ✅ Data models and logging
+- Web-based GUI with real-time progress
+- CLI interface
+- Configuration system
+- Jira extraction
+- WSL compatibility
 
 ### In Progress
-- 🔄 Complete extractors
-- 🔄 Content transformers
-- 🔄 Target uploaders
-
-See [ASSESSMENT.md](ASSESSMENT.md) for detailed status and roadmap.
+- Content transformers
+- Target uploaders (OpenProject, GitLab)
 
 ## Development
 
@@ -243,8 +259,3 @@ David Dunnock - dunnoda@gmail.com
 
 - **Issues**: [GitHub Issues](https://github.com/ddunnock/atlassian-migration-tool/issues)
 - **Documentation**: See `docs/` directory
-- **Project Assessment**: See [ASSESSMENT.md](ASSESSMENT.md)
-
----
-
-**Note**: This project is in active development. Check [ASSESSMENT.md](ASSESSMENT.md) for current implementation status and timeline.

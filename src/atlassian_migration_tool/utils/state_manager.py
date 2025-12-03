@@ -6,11 +6,11 @@ allowing independent execution of extraction, transformation, and upload phases.
 """
 
 import json
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 
 class PhaseStatus(Enum):
@@ -27,10 +27,10 @@ class ExtractionState:
     source_type: str  # confluence or jira
     source_id: str  # space key or project key
     status: str
-    extracted_at: Optional[str] = None
-    output_path: Optional[str] = None
+    extracted_at: str | None = None
+    output_path: str | None = None
     item_count: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -40,11 +40,11 @@ class TransformationState:
     source_id: str
     target_format: str  # markdown, html, etc.
     status: str
-    transformed_at: Optional[str] = None
-    input_path: Optional[str] = None
-    output_path: Optional[str] = None
+    transformed_at: str | None = None
+    input_path: str | None = None
+    output_path: str | None = None
     item_count: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -54,30 +54,30 @@ class UploadState:
     source_type: str
     source_id: str
     status: str
-    uploaded_at: Optional[str] = None
-    input_path: Optional[str] = None
+    uploaded_at: str | None = None
+    input_path: str | None = None
     item_count: int = 0
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class StateManager:
     """
     Manage state of migration phases.
-    
+
     Tracks extraction, transformation, and upload states to enable
     independent execution of each phase.
     """
-    
+
     def __init__(self, state_file: str = "data/state/migration_state.json"):
         """Initialize state manager."""
         self.state_file = Path(state_file)
         self.state_file.parent.mkdir(parents=True, exist_ok=True)
         self.state = self._load_state()
-    
-    def _load_state(self) -> Dict[str, Any]:
+
+    def _load_state(self) -> dict[str, Any]:
         """Load state from file."""
         if self.state_file.exists():
-            with open(self.state_file, 'r') as f:
+            with open(self.state_file) as f:
                 return json.load(f)
         return {
             'extractions': {},
@@ -88,15 +88,15 @@ class StateManager:
                 'last_updated': datetime.now().isoformat()
             }
         }
-    
+
     def _save_state(self) -> None:
         """Save state to file."""
         self.state['metadata']['last_updated'] = datetime.now().isoformat()
         with open(self.state_file, 'w') as f:
             json.dump(self.state, f, indent=2)
-    
+
     # Extraction state management
-    
+
     def record_extraction_start(self, source_type: str, source_id: str, output_path: str) -> None:
         """Record that an extraction has started."""
         key = f"{source_type}:{source_id}"
@@ -107,11 +107,11 @@ class StateManager:
             output_path=output_path
         ))
         self._save_state()
-    
+
     def record_extraction_complete(
-        self, 
-        source_type: str, 
-        source_id: str, 
+        self,
+        source_type: str,
+        source_id: str,
         item_count: int,
         output_path: str
     ) -> None:
@@ -126,11 +126,11 @@ class StateManager:
             item_count=item_count
         ))
         self._save_state()
-    
+
     def record_extraction_failed(
-        self, 
-        source_type: str, 
-        source_id: str, 
+        self,
+        source_type: str,
+        source_id: str,
         error_message: str
     ) -> None:
         """Record that an extraction has failed."""
@@ -146,28 +146,28 @@ class StateManager:
                 error_message=error_message
             ))
         self._save_state()
-    
-    def get_extraction_state(self, source_type: str, source_id: str) -> Optional[Dict[str, Any]]:
+
+    def get_extraction_state(self, source_type: str, source_id: str) -> dict[str, Any] | None:
         """Get extraction state for a specific source."""
         key = f"{source_type}:{source_id}"
         return self.state['extractions'].get(key)
-    
-    def get_all_extractions(self) -> Dict[str, Any]:
+
+    def get_all_extractions(self) -> dict[str, Any]:
         """Get all extraction states."""
         return self.state['extractions']
-    
-    def get_completed_extractions(self) -> List[Dict[str, Any]]:
+
+    def get_completed_extractions(self) -> list[dict[str, Any]]:
         """Get all completed extractions."""
         return [
             state for state in self.state['extractions'].values()
             if state['status'] == PhaseStatus.COMPLETED.value
         ]
-    
+
     # Transformation state management
-    
+
     def record_transformation_start(
-        self, 
-        source_type: str, 
+        self,
+        source_type: str,
         source_id: str,
         target_format: str,
         input_path: str,
@@ -184,7 +184,7 @@ class StateManager:
             output_path=output_path
         ))
         self._save_state()
-    
+
     def record_transformation_complete(
         self,
         source_type: str,
@@ -205,7 +205,7 @@ class StateManager:
             item_count=item_count
         ))
         self._save_state()
-    
+
     def record_transformation_failed(
         self,
         source_type: str,
@@ -227,30 +227,30 @@ class StateManager:
                 error_message=error_message
             ))
         self._save_state()
-    
+
     def get_transformation_state(
-        self, 
-        source_type: str, 
+        self,
+        source_type: str,
         source_id: str,
         target_format: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get transformation state for a specific source."""
         key = f"{source_type}:{source_id}:{target_format}"
         return self.state['transformations'].get(key)
-    
-    def get_all_transformations(self) -> Dict[str, Any]:
+
+    def get_all_transformations(self) -> dict[str, Any]:
         """Get all transformation states."""
         return self.state['transformations']
-    
-    def get_completed_transformations(self) -> List[Dict[str, Any]]:
+
+    def get_completed_transformations(self) -> list[dict[str, Any]]:
         """Get all completed transformations."""
         return [
             state for state in self.state['transformations'].values()
             if state['status'] == PhaseStatus.COMPLETED.value
         ]
-    
+
     # Upload state management
-    
+
     def record_upload_start(
         self,
         target_system: str,
@@ -268,7 +268,7 @@ class StateManager:
             input_path=input_path
         ))
         self._save_state()
-    
+
     def record_upload_complete(
         self,
         target_system: str,
@@ -283,7 +283,7 @@ class StateManager:
             self.state['uploads'][key]['uploaded_at'] = datetime.now().isoformat()
             self.state['uploads'][key]['item_count'] = item_count
         self._save_state()
-    
+
     def record_upload_failed(
         self,
         target_system: str,
@@ -305,55 +305,55 @@ class StateManager:
                 error_message=error_message
             ))
         self._save_state()
-    
+
     def get_upload_state(
         self,
         target_system: str,
         source_type: str,
         source_id: str
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Get upload state for a specific source."""
         key = f"{target_system}:{source_type}:{source_id}"
         return self.state['uploads'].get(key)
-    
-    def get_all_uploads(self) -> Dict[str, Any]:
+
+    def get_all_uploads(self) -> dict[str, Any]:
         """Get all upload states."""
         return self.state['uploads']
-    
-    def get_completed_uploads(self) -> List[Dict[str, Any]]:
+
+    def get_completed_uploads(self) -> list[dict[str, Any]]:
         """Get all completed uploads."""
         return [
             state for state in self.state['uploads'].values()
             if state['status'] == PhaseStatus.COMPLETED.value
         ]
-    
+
     # Pipeline status
-    
-    def get_pipeline_status(self, source_type: str, source_id: str) -> Dict[str, str]:
+
+    def get_pipeline_status(self, source_type: str, source_id: str) -> dict[str, str]:
         """
         Get complete pipeline status for a source.
-        
+
         Returns status of extraction, transformation, and upload phases.
         """
         ext_key = f"{source_type}:{source_id}"
         extraction_status = "not_started"
         if ext_key in self.state['extractions']:
             extraction_status = self.state['extractions'][ext_key]['status']
-        
+
         # Find any transformations for this source
         transformation_status = "not_started"
-        for key, trans in self.state['transformations'].items():
+        for _key, trans in self.state['transformations'].items():
             if trans['source_type'] == source_type and trans['source_id'] == source_id:
                 transformation_status = trans['status']
                 break
-        
+
         # Find any uploads for this source
         upload_status = "not_started"
-        for key, upl in self.state['uploads'].items():
+        for _key, upl in self.state['uploads'].items():
             if upl['source_type'] == source_type and upl['source_id'] == source_id:
                 upload_status = upl['status']
                 break
-        
+
         return {
             'source_type': source_type,
             'source_id': source_id,
@@ -361,37 +361,37 @@ class StateManager:
             'transformation': transformation_status,
             'upload': upload_status
         }
-    
-    def get_all_pipeline_statuses(self) -> List[Dict[str, str]]:
+
+    def get_all_pipeline_statuses(self) -> list[dict[str, str]]:
         """Get pipeline status for all sources."""
         sources = set()
-        
+
         # Collect all unique sources
         for key in self.state['extractions'].keys():
             source_type, source_id = key.split(':', 1)
             sources.add((source_type, source_id))
-        
+
         for key in self.state['transformations'].keys():
             parts = key.split(':')
             if len(parts) >= 2:
                 source_type, source_id = parts[0], parts[1]
                 sources.add((source_type, source_id))
-        
+
         for key in self.state['uploads'].keys():
             parts = key.split(':')
             if len(parts) >= 3:
                 source_type, source_id = parts[1], parts[2]
                 sources.add((source_type, source_id))
-        
+
         return [
             self.get_pipeline_status(source_type, source_id)
             for source_type, source_id in sorted(sources)
         ]
-    
-    def clear_state(self, source_type: Optional[str] = None, source_id: Optional[str] = None) -> None:
+
+    def clear_state(self, source_type: str | None = None, source_id: str | None = None) -> None:
         """
         Clear state for specific source or all sources.
-        
+
         Args:
             source_type: If provided, only clear this source type
             source_id: If provided (with source_type), only clear this specific source
@@ -431,5 +431,5 @@ class StateManager:
             self.state['extractions'] = {}
             self.state['transformations'] = {}
             self.state['uploads'] = {}
-        
+
         self._save_state()

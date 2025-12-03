@@ -2,13 +2,14 @@
 Configuration loader utility
 """
 import os
-import yaml
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any
+
+import yaml
 from dotenv import load_dotenv
 
 
-def load_config(config_path: str = "config/config.yaml") -> Dict[str, Any]:
+def load_config(config_path: str = "config/config.yaml") -> dict[str, Any]:
     """
     Load configuration from YAML file.
 

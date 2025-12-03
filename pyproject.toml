@@ -69,6 +69,12 @@ aiofiles = "^23.2.0"
 aiohttp = "^3.9.0"
 asyncio = "^3.4.3"
 
+# Web GUI (FastAPI)
+fastapi = "^0.109.0"
+uvicorn = {extras = ["standard"], version = "^0.27.0"}
+sse-starlette = "^2.0.0"
+python-multipart = "^0.0.9"
+
 # Data validation and serialization
 jsonschema = "^4.20.0"
 cattrs = "^23.2.0"
@@ -132,7 +138,7 @@ mkdocstrings = "^0.24.0"
 
 [tool.poetry.scripts]
 atlassian-migrate = "atlassian_migration_tool.cli:main"
-atlassian-migrate-gui = "atlassian_migration_tool.jira_gui:main"
+atlassian-migrate-gui = "atlassian_migration_tool.web.app:main"
 
 [build-system]
 requires = ["poetry-core"]

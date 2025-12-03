@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Logs - Jira Migration Tool{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0" x-data="logsPage()">
+    <!-- Page header -->
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Logs</h2>
+            <p class="mt-1 text-sm text-gray-600">View application logs and activity</p>
+        </div>
+        <div class="flex space-x-2">
+            <button @click="toggleStreaming()"
+                    :class="streaming ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                    class="px-4 py-2 text-sm font-medium text-white rounded-md">
+                <span x-show="!streaming">Start Live Stream</span>
+                <span x-show="streaming">Stop Live Stream</span>
+            </button>
+            <button @click="loadLogs()"
+                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Refresh
+            </button>
+            <button @click="clearLogs()"
+                    class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Clear Display
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter controls -->
+    <div class="bg-white shadow rounded-lg mb-6 px-4 py-3">
+        <div class="flex items-center space-x-4">
+            <span class="text-sm font-medium text-gray-700">Filter:</span>
+            <label class="flex items-center">
+                <input type="checkbox" x-model="showInfo" class="rounded border-gray-300 text-blue-600">
+                <span class="ml-2 text-sm text-blue-600">Info</span>
+            </label>
+            <label class="flex items-center">
+                <input type="checkbox" x-model="showWarning" class="rounded border-gray-300 text-yellow-600">
+                <span class="ml-2 text-sm text-yellow-600">Warning</span>
+            </label>
+            <label class="flex items-center">
+                <input type="checkbox" x-model="showError" class="rounded border-gray-300 text-red-600">
+                <span class="ml-2 text-sm text-red-600">Error</span>
+            </label>
+            <label class="flex items-center">
+                <input type="checkbox" x-model="showDebug" class="rounded border-gray-300 text-gray-600">
+                <span class="ml-2 text-sm text-gray-600">Debug</span>
+            </label>
+            <div class="flex-1"></div>
+            <div class="flex items-center">
+                <span class="text-sm text-gray-500 mr-2">Lines:</span>
+                <select x-model.number="maxLines" @change="loadLogs()"
+                        class="text-sm border-gray-300 rounded-md">
+                    <option value="100">100</option>
+                    <option value="500">500</option>
+                    <option value="1000">1000</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log display -->
+    <div class="bg-gray-900 rounded-lg shadow overflow-hidden">
+        <div class="p-4 max-h-[600px] overflow-y-auto font-mono text-sm" x-ref="logContainer">
+            <!-- Loading state -->
+            <div x-show="loading" class="text-gray-400 text-center py-8">
+                Loading logs...
+            </div>
+
+            <!-- No logs -->
+            <div x-show="!loading && filteredLogs.length === 0" class="text-gray-400 text-center py-8">
+                No logs to display
+            </div>
+
+            <!-- Log entries -->
+            <template x-for="(log, index) in filteredLogs" :key="index">
+                <div class="py-1 border-b border-gray-800 last:border-0"
+                     :class="{
+                         'text-blue-400': log.level === 'INFO',
+                         'text-yellow-400': log.level === 'WARNING',
+                         'text-red-400': log.level === 'ERROR',
+                         'text-gray-500': log.level === 'DEBUG',
+                         'text-gray-300': !log.level
+                     }">
+                    <span x-text="log.text || log"></span>
+                </div>
+            </template>
+
+            <!-- Streaming indicator -->
+            <div x-show="streaming" class="py-2 text-green-400 animate-pulse">
+                Streaming live logs...
+            </div>
+        </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="mt-4 flex justify-between text-sm text-gray-500">
+        <span>Showing <span x-text="filteredLogs.length"></span> entries</span>
+        <span x-show="streaming" class="flex items-center text-green-600">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+            Live streaming active
+        </span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function logsPage() {
+        return {
+            logs: [],
+            loading: true,
+            streaming: false,
+            eventSource: null,
+            maxLines: 100,
+            showInfo: true,
+            showWarning: true,
+            showError: true,
+            showDebug: false,
+
+            get filteredLogs() {
+                return this.logs.filter(log => {
+                    const level = (log.level || '').toUpperCase();
+                    if (level === 'INFO' && !this.showInfo) return false;
+                    if (level === 'WARNING' && !this.showWarning) return false;
+                    if (level === 'ERROR' && !this.showError) return false;
+                    if (level === 'DEBUG' && !this.showDebug) return false;
+                    return true;
+                });
+            },
+
+            async init() {
+                await this.loadLogs();
+            },
+
+            async loadLogs() {
+                this.loading = true;
+                try {
+                    const response = await fetch(`/api/status/logs?lines=${this.maxLines}`);
+                    const data = await response.json();
+
+                    if (data.logs) {
+                        this.logs = data.logs.map(line => this.parseLine(line));
+                    }
+                } catch (err) {
+                    console.error('Failed to load logs:', err);
+                } finally {
+                    this.loading = false;
+                    this.scrollToBottom();
+                }
+            },
+
+            parseLine(line) {
+                // Try to extract log level from common formats
+                // e.g., "2024-01-15 10:30:00 | INFO | message"
+                // or "[INFO] message"
+                let level = '';
+                let text = line;
+
+                const levelMatch = line.match(/\|\s*(DEBUG|INFO|WARNING|ERROR|CRITICAL)\s*\|/i)
+                    || line.match(/\[(DEBUG|INFO|WARNING|ERROR|CRITICAL)\]/i);
+
+                if (levelMatch) {
+                    level = levelMatch[1].toUpperCase();
+                }
+
+                return { text, level };
+            },
+
+            toggleStreaming() {
+                if (this.streaming) {
+                    this.stopStreaming();
+                } else {
+                    this.startStreaming();
+                }
+            },
+
+            startStreaming() {
+                this.streaming = true;
+                this.eventSource = new EventSource('/api/status/logs/stream');
+
+                this.eventSource.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    if (data.log) {
+                        this.logs.push(this.parseLine(data.log));
+                        // Keep only last N lines
+                        if (this.logs.length > this.maxLines * 2) {
+                            this.logs = this.logs.slice(-this.maxLines);
+                        }
+                        this.scrollToBottom();
+                    }
+                };
+
+                this.eventSource.onerror = () => {
+                    console.error('Log stream error');
+                    this.stopStreaming();
+                };
+            },
+
+            stopStreaming() {
+                this.streaming = false;
+                if (this.eventSource) {
+                    this.eventSource.close();
+                    this.eventSource = null;
+                }
+            },
+
+            clearLogs() {
+                this.logs = [];
+            },
+
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    const container = this.$refs.logContainer;
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                });
+            }
+        }
+    }
+</script>
+{% endblock %}

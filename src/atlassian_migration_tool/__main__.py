@@ -9,6 +9,7 @@ It imports and executes the CLI interface.
 """
 
 import sys
+
 from atlassian_migration_tool.cli import main
 
 if __name__ == "__main__":

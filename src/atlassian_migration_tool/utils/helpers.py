@@ -1,9 +1,8 @@
 """
 Helper utility functions
 """
-from pathlib import Path
-from typing import Optional
 from datetime import datetime
+from pathlib import Path
 
 
 def sanitize_filename(filename: str) -> str:
@@ -46,7 +45,7 @@ def ensure_directory(path: Path) -> Path:
     return path
 
 
-def format_datetime(dt: Optional[datetime] = None, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
+def format_datetime(dt: datetime | None = None, fmt: str = "%Y-%m-%d %H:%M:%S") -> str:
     """
     Format datetime to string.
 

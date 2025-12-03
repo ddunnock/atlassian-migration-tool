@@ -3,67 +3,16 @@
 
 # Atlassian Source Configuration
 atlassian:
-  # Confluence Configuration
-  confluence:
-    # Confluence instance URL
-    url: "https://confluence.example.com"
-
-    # Authentication (use environment variables for security)
-    username: "your-username"
-    api_token: "${CONFLUENCE_API_TOKEN}"  # Set in environment or .env file
-
-    # Deployment type (true for Cloud, false for Server/Data Center)
-    cloud: true
-
-    # Spaces to migrate (list all spaces you want to extract)
-    spaces:
-      - "SPACE1"
-      - "SPACE2"
-      - "SPACE3"
-
-    # Extraction options
-    extract_options:
-      # Include archived content
-      include_archived: false
-
-      # Download attachments
-      include_attachments: true
-
-      # Attachment file types to include (MIME types or wildcards)
-      attachment_types:
-        - "image/*"
-        - "application/pdf"
-        - "application/vnd.openxmlformats-officedocument.*"
-        - "application/msword"
-        - "text/*"
-
-      # Maximum attachment size in MB
-      max_attachment_size_mb: 100
-
-      # Extract page comments
-      extract_comments: true
-
-      # Extract page labels/tags
-      extract_labels: true
-
-      # Date filter (only extract content modified after this date)
-      # Format: YYYY-MM-DD or leave empty for all content
-      date_filter:
-        modified_after: ""  # e.g., "2024-01-01"
-
-      # Maximum pages per space (0 for unlimited)
-      max_pages_per_space: 0
-
   # Jira Configuration
   jira:
     # Jira instance URL
     url: "https://jira.example.com"
 
-    # Authentication
+    # Authentication (use environment variables for security)
     username: "your-username"
-    api_token: "${JIRA_API_TOKEN}"
+    api_token: "${JIRA_API_TOKEN}"  # Set in environment or .env file
 
-    # Deployment type
+    # Deployment type (true for Cloud, false for Server/Data Center)
     cloud: true
 
     # Projects to migrate
@@ -106,43 +55,6 @@ atlassian:
 
 # Target System Configuration
 targets:
-  # Wiki.js Configuration
-  wikijs:
-    # Enable/disable Wiki.js upload
-    enabled: true
-
-    # Wiki.js instance URL
-    url: "https://wiki.yourcompany.com"
-
-    # API token (generate in Wiki.js admin panel)
-    api_token: "${WIKIJS_API_TOKEN}"
-
-    # Default locale for pages
-    default_locale: "en"
-
-    # Default editor (markdown, html, etc.)
-    default_editor: "markdown"
-
-    # Root path for migrated content (empty for root)
-    root_path: ""
-
-    # Upload options
-    upload_options:
-      # Create parent pages if they don't exist
-      create_parents: true
-
-      # Update existing pages
-      update_existing: true
-
-      # Conflict resolution strategy (skip, overwrite, version)
-      conflict_resolution: "version"
-
-      # Preserve original author (if user exists)
-      preserve_author: true
-
-      # Preserve timestamps
-      preserve_timestamps: true
-
   # OpenProject Configuration
   openproject:
     # Enable/disable OpenProject upload
@@ -247,32 +159,6 @@ migration:
 
 # Transformation Settings
 transformation:
-  # Confluence transformation settings
-  confluence:
-    # Output format (markdown, html)
-    format: "markdown"
-
-    # Preserve Confluence macros (or strip them)
-    preserve_macros: false
-
-    # Extract and convert tables
-    extract_tables: true
-
-    # Rewrite internal links to new system format
-    rewrite_links: true
-
-    # Convert page tree structure
-    preserve_hierarchy: true
-
-    # Macro handling (specific macros to preserve/convert)
-    macro_handling:
-      code: "convert"       # Convert to code blocks
-      info: "convert"       # Convert to callouts
-      warning: "convert"    # Convert to callouts
-      toc: "generate"       # Generate TOC
-      jira: "link"          # Convert to links
-      default: "strip"      # Default action for unknown macros
-
   # Jira transformation settings
   jira:
     # Include comments in work package descriptions

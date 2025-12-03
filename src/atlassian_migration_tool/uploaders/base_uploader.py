@@ -5,7 +5,8 @@ Abstract base class for all uploaders providing common functionality.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any
+
 from loguru import logger
 
 
@@ -16,7 +17,7 @@ class BaseUploader(ABC):
     All uploaders should inherit from this class and implement the required methods.
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """
         Initialize the uploader.
 
