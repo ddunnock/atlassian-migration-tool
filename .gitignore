@@ -163,3 +163,5 @@ cython_debug/
 # Configuration files with secrets
 config/config.yaml
 
+# Data files generated during runtime
+data/

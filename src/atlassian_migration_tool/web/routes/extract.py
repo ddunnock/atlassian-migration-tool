@@ -102,6 +102,7 @@ def run_jira_extraction(
                 project = extractor.extract_project(project_key)
                 issue_count = len(project.issues)
 
+                logger.warning(results)
                 results["projects"].append({
                     "key": project_key,
                     "issues": issue_count,
